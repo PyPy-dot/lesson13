@@ -2,16 +2,22 @@ from aiogram import types, Dispatcher, Bot, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import asyncio
 
 API_TOKEN = 'TOKEN'
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 kb = ReplyKeyboardMarkup(resize_keyboard=True)
+ikb = InlineKeyboardMarkup()
 
 button1 = KeyboardButton(text='Рассчитать')
 button2 = KeyboardButton(text='Информация')
 kb.row(button1, button2)
+
+ibutton1 = InlineKeyboardButton(text='Рассчитать норму калорий', callback_data='calories')
+ibutton2 = InlineKeyboardButton(text='Формулы расчёта', callback_data='formulas')
+ikb.add(ibutton1, ibutton2)
 
 
 class UserState(StatesGroup):
@@ -24,9 +30,22 @@ class UserState(StatesGroup):
 async def start(message):
     await message.answer('Выбрать', reply_markup=kb)
 
+
 @dp.message_handler(text='Рассчитать')
-async def set_age(message):
-    await message.answer('Введите свой возраст:')
+async def main_menu(message):
+    await message.answer('Выберите опцию:', reply_markup=ikb)
+
+
+@dp.callback_query_handler(text='formulas')
+async def get_formulas(call):
+    await call.message.answer('Формула для мужчин: 10 х вес (кг) + 6,25 x рост (см) – 5 х возраст (г) + 5')
+    await call.answer()
+
+
+@dp.callback_query_handler(text='calories')
+async def set_age(call):
+    await call.message.answer('Введите свой возраст:')
+    await call.answer()
     await UserState.age.set()
 
 
